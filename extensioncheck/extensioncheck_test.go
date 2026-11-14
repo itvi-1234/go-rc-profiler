@@ -571,3 +571,53 @@ func TestAnIDWithTwoVersionsIsAmbiguousWithoutAVersion(t *testing.T) {
 		}
 	}
 }
+
+func TestValidateProfileYAMLAcceptsOperationsWrittenAsStrings(t *testing.T) {
+	root := t.TempDir()
+	writeFiles(t, map[string]string{
+		filepath.Join(root, "mail.yaml"): `apiVersion: runtimeconditions.io/v1alpha1
+kind: RuntimeConditionsExtensionDefinition
+metadata:
+  id: https://example.com/rc/mail/v1/runtimeconditions.extension.yaml
+  version: v1
+spec:
+  kinds:
+  - name: api
+  interfaceTypes:
+  - name: smtp
+    targetKind: api
+  interfaceFields:
+  - {name: operations, targetKind: api, targetType: smtp}
+  fieldValues:
+  - {field: 'interface.operations[]', targetKind: api, targetType: smtp, values: [send]}
+  schemas:
+  - id: api-smtp
+    appliesToKind: api
+    appliesToInterfaceType: smtp
+    description: Validates SMTP operations.
+    schema:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        interface:
+          type: object
+          required: [operations]
+          properties:
+            operations: {type: array, minItems: 1, uniqueItems: true, items: {enum: [send]}}
+`,
+	})
+	profile := func(operations string) []byte {
+		return []byte("apiVersion: runtimeconditions.io/v1alpha1\nkind: RuntimeConditionsProfile\nextensions:\n- https://example.com/rc/mail:v1\nconditions:\n- kind: api\n  interface:\n    type: smtp\n    operations: " + operations + "\n")
+	}
+	options := ProfileOptions{CatalogRoots: []string{root}}
+	if err := ValidateProfileYAML(profile("[send]"), options); err != nil {
+		t.Fatalf("a string operation was rejected: %v", err)
+	}
+	err := ValidateProfileYAML(profile("[receive]"), options)
+	if err == nil || !strings.Contains(err.Error(), "interface.operations[0] receive for api/smtp") {
+		t.Fatalf("a string operation outside the vocabulary should be rejected, got %v", err)
+	}
+	if err := ValidateProfileYAML(profile("[{method: GET, path: /x}]"), options); err == nil {
+		t.Fatal("an object operation must still be checked against the extension schema")
+	}
+}

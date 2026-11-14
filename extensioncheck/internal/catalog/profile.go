@@ -1,5 +1,7 @@
 package catalog
 
+import "gopkg.in/yaml.v3"
+
 // ProfileDocument is a generated Runtime Conditions Profile, checked against the
 // vocabulary its declared extensions resolve to.
 type ProfileDocument struct {
@@ -35,12 +37,34 @@ type ProfileAPISpec struct {
 	Version string `yaml:"version"`
 }
 
-// ProfileOperation is a single request a workload makes.
+// ProfileOperation is a single operation a workload performs. Most extensions
+// describe it as an object (an HTTP method and path, for example); some name it
+// with a plain string, in which case Value holds that string.
 type ProfileOperation struct {
+	Value             string `yaml:"-"`
 	Method            string `yaml:"method"`
 	Path              string `yaml:"path"`
 	RequestBodySchema any    `yaml:"requestBodySchema"`
 	ResponseSchema    any    `yaml:"responseSchema"`
+}
+
+// UnmarshalYAML accepts an operation written as a string or as an object.
+func (o *ProfileOperation) UnmarshalYAML(node *yaml.Node) error {
+	if node.Kind == yaml.ScalarNode {
+		var value string
+		if err := node.Decode(&value); err != nil {
+			return err
+		}
+		*o = ProfileOperation{Value: value}
+		return nil
+	}
+	type object ProfileOperation
+	var decoded object
+	if err := node.Decode(&decoded); err != nil {
+		return err
+	}
+	*o = ProfileOperation(decoded)
+	return nil
 }
 
 // ProfileSubject is a messaging subject a workload publishes or subscribes to.

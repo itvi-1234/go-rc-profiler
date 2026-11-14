@@ -142,6 +142,9 @@ func (p *ProfileChecker) validateConditionInterface(prefix string, resolved cata
 	if len(condition.Interface.Operations) > 0 {
 		p.report.ExpectExactlyOne(resolved.InterfaceFieldCount(kind, interfaceType, "operations"), "%s.interface.operations for %s/%s", prefix, kind, interfaceType)
 		for operationIndex, operation := range condition.Interface.Operations {
+			if operation.Value != "" {
+				p.report.ExpectExactlyOne(resolved.FieldValueCount("interface.operations[]", kind, interfaceType, operation.Value), "%s.interface.operations[%d] %s for %s/%s", prefix, operationIndex, operation.Value, kind, interfaceType)
+			}
 			if operation.Method != "" {
 				p.report.ExpectExactlyOne(resolved.FieldValueCount("interface.operations[].method", kind, interfaceType, operation.Method), "%s.interface.operations[%d].method %s for %s/%s", prefix, operationIndex, operation.Method, kind, interfaceType)
 			}
