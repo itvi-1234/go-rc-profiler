@@ -237,3 +237,44 @@ func conditionFieldApplies(field ConditionField, kind string, interfaceType stri
 	}
 	return len(field.AppliesToInterfaceTypes) == 0 || slices.Contains(field.AppliesToInterfaceTypes, interfaceType)
 }
+
+// InterfaceFieldDeclared reports whether any resolved extension declares the
+// named interface field for any kind and interface type.
+func (v Vocabulary) InterfaceFieldDeclared(name string) bool {
+	for _, node := range v.nodes {
+		for _, item := range node.Definition.Spec.InterfaceFields {
+			if item.Name == name {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// ConditionFieldDeclared reports whether any resolved extension declares the
+// named condition field for any kind and interface type.
+func (v Vocabulary) ConditionFieldDeclared(name string) bool {
+	for _, node := range v.nodes {
+		for _, item := range node.Definition.Spec.ConditionFields {
+			if item.Name == name {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// FieldValueFields returns the field paths for which resolved extensions
+// enumerate values on the given kind and interface type, in a stable order.
+func (v Vocabulary) FieldValueFields(kind string, interfaceType string) []string {
+	var fields []string
+	for _, node := range v.nodes {
+		for _, item := range node.Definition.Spec.FieldValues {
+			if item.TargetKind == kind && item.TargetType == interfaceType && !slices.Contains(fields, item.Field) {
+				fields = append(fields, item.Field)
+			}
+		}
+	}
+	slices.Sort(fields)
+	return fields
+}

@@ -179,9 +179,10 @@ func ValidateProfileYAML(data []byte, opts ProfileOptions) error {
 	if err := yaml.Unmarshal(data, &profile); err != nil {
 		return err
 	}
-	// Conditions are decoded a second time as free-form values, because the
-	// extension JSON Schemas validate the document as written rather than the
-	// subset the typed model captures.
+	// Conditions are decoded as free-form values and never into fixed types: what
+	// a condition may hold beyond its kind and interface type is defined by the
+	// extensions the profile declares, and their schemas validate the document as
+	// written.
 	var raw struct {
 		Conditions []any `yaml:"conditions"`
 	}
