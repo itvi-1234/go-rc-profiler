@@ -17,7 +17,6 @@ import (
 	"github.com/runtimeconditions/go-rc-profiler/extensioncheck"
 	"github.com/runtimeconditions/go-rc-profiler/extractor/internal/binding"
 	"github.com/runtimeconditions/go-rc-profiler/extractor/internal/gosource"
-	"gopkg.in/yaml.v3"
 )
 
 // Options configures source extraction and the generated profile metadata.
@@ -30,8 +29,8 @@ type Options struct {
 	// their language bindings.
 	ExtensionRoots []string
 
-	// SkipValidation emits the profile without checking it against the
-	// vocabulary it claims to use.
+	// SkipValidation skips checking the binding manifests and resolving the
+	// extension dependency closure.
 	SkipValidation bool
 
 	// DisableGoPackages forces the syntax-only path. Declarations still
@@ -45,7 +44,8 @@ type Options struct {
 
 // ExtractDir reads the earlier handwritten Go declaration contracts. It remains
 // available for existing integrations; generated structural bindings use
-// ExtractGeneratedDir instead.
+// ExtractGeneratedDir instead. The profile it returns is not checked against the vocabulary of its
+// extensions; rc profile validate does that.
 func ExtractDir(dir string, opts Options) (*RuntimeConditionsProfile, error) {
 	absDir, err := filepath.Abs(dir)
 	if err != nil {
@@ -94,7 +94,7 @@ func ExtractDir(dir string, opts Options) (*RuntimeConditionsProfile, error) {
 	if opts.SkipValidation {
 		return result, nil
 	}
-	if err := validate(result, catalogRoots); err != nil {
+	if err := resolveClosure(result, catalogRoots); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -142,12 +142,12 @@ func discoverVocabulary(absDir string, files []gosource.File, opts Options) ([]*
 	return append(bindings, packageBindings...), nil
 }
 
-// validate resolves the profile's extension list to its full dependency closure
-// and then checks the document against the resolved vocabulary.
+// resolveClosure writes the full dependency closure of the profile's extensions back into it,
+// because a profile has to name every extension it relies on, including those reached indirectly.
 //
-// The closure is written back because a profile has to name every extension it
-// relies on, including those reached indirectly.
-func validate(result *RuntimeConditionsProfile, catalogRoots []string) error {
+// ExtractDir does not check the profile against the vocabulary of its extensions. rc profile validate
+// does that for a profile from any profiler.
+func resolveClosure(result *RuntimeConditionsProfile, catalogRoots []string) error {
 	closure, err := extensioncheck.ResolveExtensionClosure(result.Extensions, extensioncheck.ProfileOptions{
 		CatalogRoots: catalogRoots,
 	})
@@ -155,14 +155,7 @@ func validate(result *RuntimeConditionsProfile, catalogRoots []string) error {
 		return err
 	}
 	result.Extensions = closure
-
-	data, err := yaml.Marshal(result)
-	if err != nil {
-		return err
-	}
-	return extensioncheck.ValidateProfileYAML(data, extensioncheck.ProfileOptions{
-		CatalogRoots: catalogRoots,
-	})
+	return nil
 }
 
 // sortedExtensions returns the deduplicated union of the extension IDs each

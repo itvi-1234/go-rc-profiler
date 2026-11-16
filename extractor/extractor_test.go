@@ -674,49 +674,6 @@ func writeAuditLog(ctx context.Context) error {
 	}
 }
 
-func TestExtractDirValidatesGeneratedProfile(t *testing.T) {
-	dir := t.TempDir()
-	sdkPath := writePackageManifestSDK(t)
-	manifestPath := filepath.Join(sdkPath, "service", "events", binding.PackageManifest)
-	data, err := os.ReadFile(manifestPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	data = []byte(strings.Replace(string(data), "property: token", "property: credential", 1))
-	if err := os.WriteFile(manifestPath, data, 0o644); err != nil {
-		t.Fatal(err)
-	}
-	writeModule(t, dir, map[string]string{
-		"github.com/example/eventstream": sdkPath,
-	})
-	if err := os.WriteFile(filepath.Join(dir, "main.go"), []byte(`package main
-
-import (
-	"context"
-	"github.com/example/eventstream/service/events"
-)
-
-func writeAuditLog(ctx context.Context) error {
-	client := events.NewClient(events.Config{})
-	return client.Publish(ctx, events.Event{})
-}
-`), 0o644); err != nil {
-		t.Fatal(err)
-	}
-
-	_, err = ExtractDir(dir, Options{
-		Name:            "invalid-generated-profile",
-		WorkloadURI:     "github.com/example/invalid-generated-profile",
-		WorkloadVersion: "v0.1.0",
-	})
-	if err == nil {
-		t.Fatal("expected generated profile validation error")
-	}
-	if !strings.Contains(err.Error(), "configuration.env[1].property credential") {
-		t.Fatalf("unexpected error: %v", err)
-	}
-}
-
 func TestExtractDirWithCheckedInAWSSDKPackageManifest(t *testing.T) {
 	dir := t.TempDir()
 	sdkPath := workspacePath(t, "spec", "examples", "sdks", "aws-sdk-go-v2")

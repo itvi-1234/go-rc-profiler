@@ -37,49 +37,11 @@ func (c *Collector) Err() error {
 	return ValidationErrors(c.errs)
 }
 
-// Report accumulates messages that already carry their own context.
-type Report struct {
-	errs []string
-}
-
-// Addf records a message.
-func (r *Report) Addf(format string, args ...any) {
-	r.errs = append(r.errs, fmt.Sprintf(format, args...))
-}
-
-// ExpectExactlyOne records a message unless exactly one definition was found.
-func (r *Report) ExpectExactlyOne(count int, format string, args ...any) {
-	if count == 1 {
-		return
-	}
-	r.Addf(format+": expected exactly one definition, got %d", append(args, count)...)
-}
-
-// AppendError folds err into the report.
-func (r *Report) AppendError(err error) {
-	r.errs = Append(r.errs, err)
-}
-
-// Err returns the accumulated messages, or nil when none were recorded.
-func (r *Report) Err() error {
-	if len(r.errs) == 0 {
-		return nil
-	}
-	return ProfileValidationErrors(r.errs)
-}
-
 // ValidationErrors reports one or more extension validation failures.
 type ValidationErrors []string
 
 func (e ValidationErrors) Error() string {
 	return join("extension validation failed:", e)
-}
-
-// ProfileValidationErrors reports one or more profile validation failures.
-type ProfileValidationErrors []string
-
-func (e ProfileValidationErrors) Error() string {
-	return join("profile validation failed:", e)
 }
 
 func join(heading string, items []string) string {
@@ -99,8 +61,6 @@ func join(heading string, items []string) string {
 func Append(errs []string, err error) []string {
 	switch typed := err.(type) {
 	case ValidationErrors:
-		return append(errs, typed...)
-	case ProfileValidationErrors:
 		return append(errs, typed...)
 	default:
 		return append(errs, err.Error())

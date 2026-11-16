@@ -12,16 +12,6 @@ type Vocabulary struct {
 	nodes []*Node
 }
 
-// NewVocabulary returns the vocabulary contributed by nodes.
-func NewVocabulary(nodes []*Node) Vocabulary {
-	return Vocabulary{nodes: nodes}
-}
-
-// Nodes returns the nodes contributing to the vocabulary.
-func (v Vocabulary) Nodes() []*Node {
-	return v.nodes
-}
-
 // Resolve returns the vocabulary of id together with its transitive
 // dependencies, ordered dependencies first.
 func (c *Catalog) Resolve(id ExtensionReference) Vocabulary {

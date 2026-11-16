@@ -11,8 +11,6 @@ import (
 	"slices"
 	"strings"
 
-	"gopkg.in/yaml.v3"
-
 	"github.com/runtimeconditions/go-rc-profiler/extensioncheck/internal/catalog"
 	"github.com/runtimeconditions/go-rc-profiler/extensioncheck/internal/check"
 	"github.com/runtimeconditions/go-rc-profiler/extensioncheck/internal/diag"
@@ -170,36 +168,6 @@ func ResolveExtensionClosure(ids []ExtensionReference, opts ProfileOptions) ([]E
 	}
 	slices.SortFunc(result, ExtensionReference.Compare)
 	return result, nil
-}
-
-// ValidateProfileYAML validates a Runtime Conditions Profile against the
-// resolved vocabulary provided by its declared extensions.
-func ValidateProfileYAML(data []byte, opts ProfileOptions) error {
-	var profile catalog.ProfileDocument
-	if err := yaml.Unmarshal(data, &profile); err != nil {
-		return err
-	}
-	// Conditions are decoded a second time as free-form values, because the
-	// extension JSON Schemas validate the document as written rather than the
-	// subset the typed model captures.
-	var raw struct {
-		Conditions []any `yaml:"conditions"`
-	}
-	if err := yaml.Unmarshal(data, &raw); err != nil {
-		return err
-	}
-
-	collector := &diag.Collector{}
-	loaded, err := catalog.Load(opts.CatalogRoots, "", collector)
-	if err != nil {
-		return err
-	}
-	report := &diag.Report{}
-	check.NewProfileChecker(check.New(loaded, check.Options{}, collector), report).Validate(profile, raw.Conditions)
-	if err := collector.Err(); err != nil {
-		report.AppendError(err)
-	}
-	return report.Err()
 }
 
 func validate(root string, opts Options, targetOnly bool) error {
