@@ -108,16 +108,6 @@ func (s *Semantic) ObjectForExpr(expr ast.Expr) types.Object {
 	}
 }
 
-// IsDefinition reports whether an identifier declares a new object rather than
-// referring to an existing one. Reassignment to an existing variable invalidates
-// any value previously tracked for it.
-func (s *Semantic) IsDefinition(ident *ast.Ident) bool {
-	if s == nil {
-		return false
-	}
-	return s.defs[ident] != nil
-}
-
 // ReceiverTypeForSelector reports the package path and type name of the value a
 // method is being called on, which is how a method call is attributed to the
 // module that declares its receiver.

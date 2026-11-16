@@ -36,7 +36,7 @@ compatibility requirement for the generated-binding path.
 | Static-value boundary | Legacy extraction accepts a limited set of option arguments and can ignore unmatched subcalls. | Specify the supported Go expression grammar, including safe constant references, conversions, address-of expressions, and pointer construction needed by optional fields. Never execute application or package code. A recognized declaration containing an unsupported or ambiguous value must fail with file, line, column, symbol, and model coordinate; it must not yield a partial Condition. |
 | Validation and identity | `extensioncheck.ValidateProfileYAML` applies extension schemas, but the generated-binding trust chain does not yet exist. `extractor.validate` also replaces the emitted `extensions` list with its transitive closure. | Verify packaged manifest, model, release metadata, and root extension bytes as required by their contract. Resolve exact dependency extension definitions and validate core structure, vocabulary ownership, and every applicable JSON Schema. Emit only extension IDs that directly contributed vocabulary; use the full transitive closure for validation. Reject missing or altered artifacts. |
 | Failure behavior | `loadWorkload` can silently fall back from `go/packages` to syntax-only extraction unless `RequireGoPackages` is set. `--skip-validation` can write an unchecked profile. | Make the generated-binding production path fail closed when package/type resolution or validation is unavailable. Any diagnostic must prevent writing an accepted profile. Development-only bypasses, if retained, must be clearly separate from the normal CLI success path. |
-| SDK mapping interaction | `extractor.ExtractDir` runs SDK mapping extraction alongside binding extraction. | Make generated-binding behavior independently testable. Remove automatic SDK extraction from this path if it changes failure behavior, extension selection, deterministic output, or validation guarantees. |
+| SDK mapping interaction (done: SDK mapping removed) | `extractor.ExtractDir` ran SDK mapping extraction alongside binding extraction. | Make generated-binding behavior independently testable. Remove automatic SDK extraction from this path if it changes failure behavior, extension selection, deterministic output, or validation guarantees. |
 
 ## Remediation sequence
 
@@ -62,9 +62,8 @@ compatibility requirement for the generated-binding path.
    unsupported expressions, missing package resources, digest mismatches,
    duplicate or conflicting fields, schema failures, and dependency problems.
    Output ordering and bytes must be stable for the same inputs.
-6. **Decide the SDK path last.** Keep SDK mapping behavior only if it can meet
-   the same installed-artifact, fail-closed, and semantic-validation guarantees
-   without complicating the generated-binding path.
+6. **The SDK path is removed.** SDK mapping was an experiment. It was removed
+   rather than kept alongside the generated-binding path.
 
 ## Evidence required before declaring interoperability
 

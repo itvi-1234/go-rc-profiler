@@ -1,8 +1,8 @@
 // Package profile defines the Runtime Conditions Profile document model.
 //
 // The types here are the shared currency of extraction: the declarative
-// binding path and the SDK mapping path both produce Conditions, and the
-// parent extractor package re-exports these types as its public API. The YAML
+// binding path produces Conditions, and the parent extractor package
+// re-exports these types as its public API. The YAML
 // tags are the serialized contract, so changing them changes every emitted
 // profile.
 package profile
