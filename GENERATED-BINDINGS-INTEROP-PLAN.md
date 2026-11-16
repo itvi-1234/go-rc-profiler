@@ -1,5 +1,10 @@
 # Generated Extension Bindings Interoperability Plan: Go Profiler
 
+> **Status:** the legacy handwritten-declaration path (`extractor.ExtractDir`, its option-call compiler
+> and its authoring checks) and SDK mapping have been removed, and checking a written profile against its
+> extensions moved to `rc profile validate`. Rows below that describe those paths are kept as the history
+> of the plan. The generated path (`ExtractGeneratedDir`) is the only way the profiler makes a profile.
+
 ## Purpose and acceptance boundary
 
 The Go profiler must generate a complete Runtime Conditions Profile from Go
